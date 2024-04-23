@@ -7,7 +7,7 @@ export default function Home() {
       <div className='flex flex-grow flex-col items-center space-y-4'>
         <div className='flex w-full justify-end space-x-4 px-4 pt-4'>
           <a
-            href='https://github.com/b4conjuice'
+            href='https://github.com/b4conjuice/tic'
             target='_blank'
             rel='noopener noreferrer'
           >
