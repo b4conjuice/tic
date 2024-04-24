@@ -1,14 +1,42 @@
 'use client'
 
 import { useState } from 'react'
+import { XMarkIcon } from '@heroicons/react/24/solid'
 import classNames from 'classnames'
 
-import Button from './ui/button'
 import Modal from './modal'
-import { Title } from './ui'
+import { Title, Button } from './ui'
 
-const PLAYER_ONE = '❌'
-const PLAYER_TWO = '⭕'
+function XIcon() {
+  return <XMarkIcon className='text-cb-mint h-8 w-8' />
+}
+
+function CircleIcon() {
+  return (
+    <svg
+      xmlns='http://www.w3.org/2000/svg'
+      width='24'
+      height='24'
+      viewBox='0 0 24 24'
+      fill='none'
+      stroke='currentColor'
+      strokeWidth='2'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      className='lucide lucide-circle text-cb-orange'
+    >
+      <circle cx='12' cy='12' r='10' />
+    </svg>
+  )
+}
+
+const PLAYER_ONE = 'x'
+const PLAYER_TWO = 'o'
+
+const Icon: Record<string, JSX.Element> = {
+  [PLAYER_ONE]: <XIcon />,
+  [PLAYER_TWO]: <CircleIcon />,
+}
 
 const defaultBoxes = ['', '', '', '', '', '', '', '', '']
 const defaultPlayer = PLAYER_ONE
@@ -24,10 +52,28 @@ const winningIndices = [
   [2, 4, 6],
 ]
 
+const MAX_MOVES = 6
+
 export default function Board() {
   const [boxes, setBoxes] = useState(defaultBoxes)
   const [player, setPlayer] = useState(defaultPlayer)
   const [isPlayAgainModalOpen, setIsPlayAgainModalOpen] = useState(false)
+  const [moves, setMoves] = useState<number[]>([])
+
+  const resetGame = () => {
+    setBoxes(defaultBoxes)
+    setPlayer(defaultPlayer)
+    setMoves([])
+  }
+
+  const updateMoveHistory = (index: number) => {
+    const newMoves = [...moves]
+    newMoves.push(index)
+    const indexAboutToBeRemove =
+      newMoves.length > MAX_MOVES ? newMoves.shift() : undefined
+    setMoves(newMoves)
+    return indexAboutToBeRemove
+  }
 
   const checkWinner = (currentBoxes: string[]) => {
     const filteredWinMap = winningIndices.filter(winArray => {
@@ -42,8 +88,13 @@ export default function Board() {
   }
 
   const playMove = (index: number) => {
+    const indexAboutToBeRemove = updateMoveHistory(index)
+
     const newBoxes = [...boxes]
     newBoxes[index] = player
+    if (indexAboutToBeRemove !== undefined) {
+      newBoxes[indexAboutToBeRemove] = ''
+    }
     setBoxes(newBoxes)
 
     if (checkWinner(newBoxes).length === 0) {
@@ -53,6 +104,8 @@ export default function Board() {
 
   const winner = checkWinner(boxes)
   const hasWinner = winner.length > 0
+
+  const indexAboutToBeRemove = moves.length === MAX_MOVES ? moves[0] : undefined
   return (
     <>
       <Title>
@@ -63,7 +116,7 @@ export default function Board() {
           <li
             key={i}
             className={classNames(
-              'border transition-all',
+              'border-2 transition-all',
               hasWinner && winner.includes(i)
                 ? 'border-cb-yellow'
                 : 'border-cb-dusty-blue',
@@ -72,13 +125,16 @@ export default function Board() {
             )}
           >
             <button
-              className='flex h-40 w-full items-center justify-center p-4 text-center text-2xl'
+              className={classNames(
+                'flex h-40 w-full items-center justify-center p-4 text-center',
+                indexAboutToBeRemove === i && 'opacity-10'
+              )}
               onClick={() => {
                 playMove(i)
               }}
               disabled={box !== '' || hasWinner}
             >
-              {box}
+              {Icon[box]}
             </button>
           </li>
         ))}
@@ -87,8 +143,7 @@ export default function Board() {
         <Button
           onClick={() => {
             if (hasWinner) {
-              setBoxes(defaultBoxes)
-              setPlayer(defaultPlayer)
+              resetGame()
             } else {
               setIsPlayAgainModalOpen(true)
             }
@@ -106,8 +161,7 @@ export default function Board() {
       >
         <Button
           onClick={() => {
-            setBoxes(defaultBoxes)
-            setPlayer(defaultPlayer)
+            resetGame()
             setIsPlayAgainModalOpen(false)
           }}
         >
